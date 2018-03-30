@@ -1,7 +1,7 @@
 from threading import Thread, Lock
 import pickle,cv2,os,numpy as np
 cascade = 'opencv-files/haarcascade_frontalface_alt.xml'
-names = ["", "Ramiz Raja", "Elvis Presley","Shivam","NM"]
+names = ["Cannot Predict Name", "Ramiz Raja", "Elvis Presley","Shivam","NM"]
 class FDP:
     def __init__(self,cascade,names,training_data='training-data',saved='trained'):
         self.face_cascade=cv2.CascadeClassifier(cascade)
@@ -33,8 +33,9 @@ class FDP:
         (x, y, w, h) = faces[0] #face rectangle coordinates 
         face = gray[y:y+w, x:x+h] 
         name, confidence = self.face_recognizer.predict(face) #predict face
+        name=name if confidence>90 else 0   
         name_text = self.names[name]
-        print(confidence)
+        print(name)
         cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2) #draw rectangle
         cv2.putText(img, name_text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 0), 2) #draw text
         return img
