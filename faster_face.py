@@ -1,7 +1,7 @@
 from threading import Thread, Lock
 import cv2,os,numpy as np
 cascade = 'opencv-files/haarcascade_frontalface_alt.xml'
-names = ["", "Ramiz Raja", "Elvis Presley","Shivam","NM"]
+names = ["", "Shivam Chawla", "Elvis Presley","Shivam","NM"]
 class FDP:
     def __init__(self,cascade,names,training_data='training-data'):
         self.face_cascade=cv2.CascadeClassifier(cascade)
@@ -51,8 +51,47 @@ class FDP:
                     print("face not detected, ignoring image",image_name)
         print("Learning Finished")
         return faces_dir, labels
-f=FDP(cascade,names,'training-data')
-os.chdir('test-data')
-im=cv2.imread('test3.jpg')
-t=f.predict_face(im)
-cv2.imwrite('output.png',t)
+
+class WebcamVideoStream :
+    def __init__(self, src = 0, width = 320, height = 240) :
+        self.stream = cv2.VideoCapture(src)
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        (self.grabbed, self.frame) = self.stream.read()
+        self.started = False
+        self.read_lock = Lock()
+    def start(self) :
+        if self.started :
+            print ("already started!!")
+            return None
+        self.started = True
+        self.thread = Thread(target=self.update, args=())
+        self.thread.start()
+        return self
+    def update(self) :
+        while self.started :
+            (grabbed, frame) = self.stream.read()
+            self.read_lock.acquire()
+            self.grabbed, self.frame = grabbed, frame
+            self.read_lock.release()
+    def read(self) :
+        self.read_lock.acquire()
+        frame = self.frame.copy()
+        self.read_lock.release()
+        return frame
+    def stop(self) :
+        self.started = False
+        self.thread.join()
+    def __exit__(self, exc_type, exc_value, traceback) :
+        self.stream.release()
+
+if __name__ == "__main__" :
+    f=FDP(cascade,names,'training-data')
+    vs = WebcamVideoStream().start()
+    while True :
+        frame = vs.read()
+        frame=f.predict_face(frame)
+        if frame != (None,None):
+            #print(type(frame))
+            cv2.imshow('v',frame)    
+            cv2.waitKey(1)    
