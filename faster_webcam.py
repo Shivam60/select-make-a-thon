@@ -3,7 +3,6 @@ import cv2,os,numpy as np
 face_cascade = cv2.CascadeClassifier('opencv-files/haarcascade_frontalface_alt2.xml')
 face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 subjects = ["", "Ramiz Raja", "Elvis Presley","Shivam","NM"]
-
 def draw_rectangle(img, rect):
     (x, y, w, h) = rect
     cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
