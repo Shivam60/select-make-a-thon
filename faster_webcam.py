@@ -1,56 +1,51 @@
 from threading import Thread, Lock
-import cv2
+import cv2,os,numpy as np
 face_cascade = cv2.CascadeClassifier('opencv-files/haarcascade_frontalface_alt2.xml')
+face_recognizer = cv2.face.LBPHFaceRecognizer_create()
+subjects = ["", "Ramiz Raja", "Elvis Presley","Shivam","NM"]
+
 def draw_rectangle(img, rect):
     (x, y, w, h) = rect
     cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
-    
+def draw_text(img, text, x, y):
+    cv2.putText(img, text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 0), 2)
+def predict(img):
+    face, rect = detect_face(img)
+    if face is None:
+        print("face not detected, program exiting")
+        return None
+    label, confidence = face_recognizer.predict(face)
+    label_text = subjects[label]
+    draw_rectangle(img, rect)
+    draw_text(img, label_text, rect[0], rect[1]-5)    
+    return img
 def detect_face(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)       
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
-
     if (len(faces) == 0):
-        return None, None
-    
+        return None, None    
     (x, y, w, h) = faces[0]
     return gray[y:y+w, x:x+h], faces[0]
-def prepare_training_data(data_folder_path):
-    
-    dirs = os.listdir(data_folder_path)
-    
+def prepare_training_data(data_folder_path):    
+    dirs = os.listdir(data_folder_path)   
     faces = []
-    labels = []
-    
+    labels = []    
     for dir_name in dirs:        
         if not dir_name.startswith("s"):
-            continue
-            
+            continue            
         label = int(dir_name.replace("s", ""))
-        subject_dir_path = data_folder_path + "/" + dir_name
-        
-        subject_images_names = os.listdir(subject_dir_path)
-        
-        for image_name in subject_images_names:
-            
+        subject_dir_path = data_folder_path + "/" + dir_name        
+        subject_images_names = os.listdir(subject_dir_path)        
+        for image_name in subject_images_names:            
             if image_name.startswith("."):
                 continue
             image_path = subject_dir_path + "/" + image_name
-
-            image = cv2.imread(image_path)
-            
-            
+            image = cv2.imread(image_path)            
             face, rect = detect_face(image)
             if face is None:
                 print("face not detected, ignoring image",image_name)
             else:
-#                cv2.imshow("Training on image...", cv2.resize(image, (400, 500)))
- #               cv2.waitKey(1)
-#                draw_rectangle(face, rect)
-            
-            if face is not None:
-                #add face to list of faces
                 faces.append(face)
-                #add label for this face
                 labels.append(label)
             
     cv2.destroyAllWindows()
@@ -97,17 +92,18 @@ class WebcamVideoStream :
         self.stream.release()
 
 if __name__ == "__main__" :
+    print("Preparing data...")
+    faces, labels = prepare_training_data("training-data")
+    face_recognizer.train(faces, np.array(labels))
+    print("Data prepared")
+
     vs = WebcamVideoStream().start()
     pv=None
     while True :
         frame = vs.read()
-        try:
-            face,rect=detect_face(frame)
-            draw_rectangle(frame,rect)
-        except:
-#            print(frame)
-            print("face not detected")
-        finally:
+        frame=predict(frame)
+        if frame is not None:
+            print(frame)
             cv2.imshow('v',frame)    
             cv2.waitKey(1)
 
