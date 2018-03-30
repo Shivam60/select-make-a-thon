@@ -1,15 +1,30 @@
 from threading import Thread, Lock
-import cv2,os,numpy as np
+import pickle,cv2,os,numpy as np
 cascade = 'opencv-files/haarcascade_frontalface_alt.xml'
-names = ["", "Shivam Chawla", "Elvis Presley","Shivam","NM"]
+names = ["", "Ramiz Raja", "Elvis Presley","Shivam","NM"]
 class FDP:
-    def __init__(self,cascade,names,training_data='training-data'):
+    def __init__(self,cascade,names,training_data='training-data',saved='trained'):
         self.face_cascade=cv2.CascadeClassifier(cascade)
         self.face_recognizer = cv2.face.LBPHFaceRecognizer_create()
         self.names=names
-        faces, labels =self.prepare_training_data(training_data)
+        print("Learning from the Database")          
+        if saved in os.listdir():
+            faces, labels=self.load(saved)
+        else:
+            faces, labels =self.prepare_training_data(training_data)
+            self.save("trained",pickle.dumps((faces,labels)))
         self.face_recognizer.train(faces, np.array(labels))
+        print("Learning Finished")
 
+    def save(self,name,stuff):
+        fl= open(name,'wb')
+        fl.write(stuff)
+        fl.close()
+
+    def load(self,name):
+        fl=open(name,'rb')
+        stuff=fl.read()
+        return pickle.loads(stuff)    
     def predict_face(self,img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)       
         faces = self.face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
@@ -19,11 +34,12 @@ class FDP:
         face = gray[y:y+w, x:x+h] 
         name, confidence = self.face_recognizer.predict(face) #predict face
         name_text = self.names[name]
+        print(confidence)
         cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2) #draw rectangle
         cv2.putText(img, name_text, (x, y), cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 0), 2) #draw text
         return img
     def prepare_training_data(self,data_folder_path):
-        print("Learning from the Database")    
+  
         dirs = os.listdir(data_folder_path)   
         faces_dir = []
         labels = []    
@@ -49,7 +65,7 @@ class FDP:
                     labels.append(label)        
                 else:
                     print("face not detected, ignoring image",image_name)
-        print("Learning Finished")
+
         return faces_dir, labels
 
 class WebcamVideoStream :
@@ -92,6 +108,6 @@ if __name__ == "__main__" :
         frame = vs.read()
         frame=f.predict_face(frame)
         if frame != (None,None):
-            #print(type(frame))
+            print(type(frame))
             cv2.imshow('v',frame)    
             cv2.waitKey(1)    
