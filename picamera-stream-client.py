@@ -1,9 +1,4 @@
-import io
-import socket
-import struct
-import time
-import threading
-import picamera
+import socket,struct,threading,picamera,io,time
 
 client_socket = socket.socket()
 client_socket.connect(('169.254.50.99', 8000))
@@ -55,22 +50,17 @@ try:
     with picamera.PiCamera() as camera:
         pool = [ImageStreamer() for i in range(4)]
         camera.resolution = (640, 480)
-        # Set the framerate appropriately; too fast and we'll starve the
-        # pool of streamers and crash the script
         camera.framerate = 30
         camera.start_preview()
         time.sleep(2)
         camera.capture_sequence(streams(), 'jpeg', use_video_port=True)
 
-    # Shut down the streamers in an orderly fashion
     while pool:
         with pool_lock:
             streamer = pool.pop()
         streamer.terminated = True
         streamer.join()
 
-    # Write the terminating 0-length to the connection to let the server
-    # know we're done
     with connection_lock:
         connection.write(struct.pack('<L', 0))
 
