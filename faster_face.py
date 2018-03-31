@@ -33,7 +33,7 @@ class FDP:
         (x, y, w, h) = faces[0] #face rectangle coordinates 
         face = gray[y:y+w, x:x+h] 
         name, confidence = self.face_recognizer.predict(face) #predict face
-        name=name if confidence>90 else 0   
+        name= 0   
         name_text = self.names[name]
         print(name)
         cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2) #draw rectangle

@@ -15,7 +15,7 @@ def draw_rectangle(img, rect):
     cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
 class WebcamVideoStream :
     def __init__(self, src = 0, width = 320, height = 240) :
-        self.stream = cv2.VideoCapture(src)
+        self.stream = cv2.VideoCapture('192.168.43.106:3333')
         self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         (self.grabbed, self.frame) = self.stream.read()
