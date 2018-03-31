@@ -3,23 +3,29 @@ import pickle,cv2,os,numpy as np
 from PIL import Image
 import queue,io,cv2,struct,time,socket
 
+cascade = 'opencv-files/lbpcascade_frontalface.xml'
+names = ["Cannot Predict Name", "Ramiz Raja", "Elvis Presley","Shivam","NM"]
+
 q = queue.Queue(maxsize=0)
 num_threads = 1
 def do_stuff(q):
   while True:
       image=np.array(q.get())
-      #frame=f.predict_face(image)
-      #if frame == (None,None):
-      #    frame=image
+      #print(image.shape)
+      if q.qsize()==0:
+          print(0)
+          time.sleep(.5)
+      frame=f.predict_face(image)
+      if frame == (None,None):
+          frame=image
       cv2.imshow('picam',np.array(image))
-      cv2.waitKey(1)
+      cv2.waitKey(2)
+      print(q.qsize())
       q.task_done()
 worker = Thread(target=do_stuff, args=(q,))
 worker.setDaemon(True)
 worker.start()
   
-cascade = 'opencv-files/haarcascade_frontalface_alt.xml'
-names = ["Cannot Predict Name", "Ramiz Raja", "Elvis Presley","Shivam","NM"]
 class FDP:
     def __init__(self,cascade,names,training_data='training-data',saved='trained'):
         self.face_cascade=cv2.CascadeClassifier(cascade)
@@ -51,7 +57,7 @@ class FDP:
         (x, y, w, h) = faces[0] #face rectangle coordinates 
         face = gray[y:y+w, x:x+h] 
         name, confidence = self.face_recognizer.predict(face) #predict face
-        name= 0   
+        name= name if confidence>95 else name=0 
         name_text = self.names[name]
         print(name)
         cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2) #draw rectangle
@@ -89,10 +95,10 @@ class FDP:
 
 class WebcamVideoStream :
     def __init__(self, src = 0, width = 320, height = 240) :
-        self.stream = cv2.VideoCapture(src)
-        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        (self.grabbed, self.frame) = self.stream.read()
+        #self.stream = cv2.VideoCapture(src)
+        #self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        #self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        #(self.grabbed, self.frame) = self.stream.read()
         self.started = False
         self.read_lock = Lock()
     def start(self) :
@@ -123,11 +129,12 @@ class WebcamVideoStream :
 
 if __name__ == "__main__" :
     f=FDP(cascade,names,'training-data')
-    vs = WebcamVideoStream().start()
+    #vs = WebcamVideoStream().start()
     server_socket = socket.socket()
-    server_socket.bind(('169.254.50.99', 8000))
-    server_socket.listen(0)
+    server_socket.bind(('169.254.50.99', 8300))
+    server_socket.listen(1)
     connection = server_socket.accept()[0].makefile('rb')
+    print('connection accepted')
     while True:
         image_len = struct.unpack('<L', connection.read(4))[0]
         if not image_len:
