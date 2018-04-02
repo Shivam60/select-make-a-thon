@@ -86,20 +86,22 @@ class WebcamVideoStream :
         self.stream.release()
 
 if __name__ == "__main__" :
-    print("Preparing data...")
-    faces, labels = prepare_training_data("training-data")
-    face_recognizer.train(faces, np.array(labels))
-    print("Data prepared")
+#    print("Preparing data...")
+#    faces, labels = prepare_training_data("training-data")
+#    face_recognizer.train(faces, np.array(labels))
+#    print("Data prepared")
 
-    vs = WebcamVideoStream().start()
+    vs = WebcamVideoStream('http://192.168.225.222:8160').start()
     pv=None
     while True :
         frame = vs.read()
-        frame=predict(frame)
-        if frame is not None:
-            print(frame)
-            cv2.imshow('v',frame)    
-            cv2.waitKey(1)
+        cv2.imshow('v',frame)
+        cv2.waitKey(1)
+#        frame=predict(frame)
+ #       if frame is not None:
+ #           print(frame)
+ #      
+	    
 
     vs.stop()
     cv2.destroyAllWindows()

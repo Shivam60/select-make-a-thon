@@ -1,7 +1,7 @@
 import socket,struct,threading,picamera,io,time
 
 client_socket = socket.socket()
-client_socket.connect(('169.254.50.99', 8000))
+client_socket.connect(('192.168.225.250', 8300))
 connection = client_socket.makefile('wb')
 try:
     connection_lock = threading.Lock()
@@ -49,10 +49,10 @@ try:
 
     with picamera.PiCamera() as camera:
         pool = [ImageStreamer() for i in range(4)]
-        camera.resolution = (640, 480)
-        camera.framerate = 30
+        camera.resolution = (100, 50)
+        camera.framerate = 12
         camera.start_preview()
-        time.sleep(2)
+        time.sleep(4)
         camera.capture_sequence(streams(), 'jpeg', use_video_port=True)
 
     while pool:
